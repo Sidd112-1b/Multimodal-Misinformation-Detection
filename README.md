@@ -1,26 +1,31 @@
 # Multimodal Misinformation Detection
 
-This project investigates multimodal misinformation detection using the Fakeddit dataset. A data sample may contain Reddit submission text, an associated image, metadata, comments, and one or more classification labels.
+A multimodal deep-learning project for detecting misinformation in online posts by combining written content, associated images, and post metadata.
 
-## Current project phase
+The project uses the Fakeddit dataset and is being developed in stages. The current implementation focuses on dataset exploration and reproducible preprocessing. Later stages will compare text-only, image-only, and multimodal models.
 
-The current phase is limited to **data exploration and data preprocessing**. Model development, training, multimodal fusion, and the final application will be handled later.
+## Project objective
 
-Current objectives:
+Online misinformation is often communicated through more than one medium. A misleading post may use sensational language, an unrelated image, or a combination of both. This project investigates whether combining textual and visual information can improve misinformation classification compared with using either modality alone.
 
-1. Understand the structure and columns of the available Fakeddit files.
-2. Examine text, image references, metadata, comments, missing values, and label distributions.
-3. Identify how records are connected through identifiers such as `submission_id`.
-4. Clean and standardize the data without modifying the raw files.
-5. Decide how to handle missing text, missing images, duplicate records, and invalid entries.
-6. Create reproducible train, validation, and test preparation outputs.
-7. Record the findings needed for the later modeling phase.
+The planned system will:
 
-The first exploration and preprocessing pass is complete. The raw split IDs and row counts were preserved, and all three label columns remain available for the later label-selection decision.
+1. Explore the structure, quality, class balance, and relationships in the dataset.
+2. Clean and standardize text, image references, metadata, labels, and comments.
+3. Establish text-only and image-only baselines.
+4. Train a multimodal model that fuses text and image representations.
+5. Evaluate the models using reproducible classification metrics.
+6. Provide a demonstration interface after the core experiments are complete.
 
-## Dataset location
+Explainable AI is not part of the current project scope. Interpretability methods may be considered later, but the present work concentrates on data preparation, model performance, and comparison of modalities.
 
-The currently available raw files are kept in `data/raw/fakeddit/`:
+## Dataset
+
+The project is designed around **Fakeddit**, a multimodal Reddit dataset containing submission text, image references, metadata, labels, and comments.
+
+Each submission is identified by a submission ID. The main submission files and the comments file are joined through the submission ID fields.
+
+The project uses the following raw files:
 
 ```text
 data/raw/fakeddit/
@@ -30,80 +35,164 @@ data/raw/fakeddit/
 └── all_comments.tsv
 ```
 
-The raw dataset must remain unchanged. Processed files and generated split information will be stored under:
+The submission data includes fields such as:
+
+- title and cleaned title text
+- image URL and image availability information
+- subreddit, domain, author, score, and upvote ratio
+- comment counts and timestamps
+- two-way, three-way, and six-way classification labels
+
+The comments file contains comment text, authorship information, parent relationships, submission IDs, and comment scores.
+
+The raw dataset is not stored in this repository. It must be obtained separately and placed in the expected directory. The preprocessing pipeline currently validates image references and records image availability; it does not download every image automatically.
+
+## Planned modeling workflow
+
+The project will compare three modeling settings:
+
+### Text-only
+
+Text features will be extracted from the post title and related text. Planned experiments may include a simple baseline followed by a transformer-based text encoder such as BERT.
+
+### Image-only
+
+Available images will be transformed into model inputs. Planned experiments may include a conventional image baseline followed by a vision transformer such as ViT.
+
+### Multimodal
+
+The text and image representations will be combined with selected metadata before classification:
 
 ```text
-data/
-├── processed/
-└── splits/
+Post text ──> text encoder ─────┐
+                                ├──> fusion network ──> classifier
+Image ─────> image encoder ─────┤
+                                │
+Metadata ───────────────────────┘
 ```
 
-The exact usable columns and label scheme will be confirmed during dataset exploration. The project may use Fakeddit's 2-way, 3-way, or 6-way labels depending on data quality, class balance, and the final project scope.
+The exact model configuration, label formulation, and hyperparameters will be finalized after the data exploration and preprocessing stages.
 
-## Initial dataset findings
+## Repository structure
 
-- Train: 564,000 records
-- Validation: 59,342 records
-- Test: 59,319 records
-- No duplicate IDs or ID overlap between the official splits
-- Approximately 0.3% of records have missing image URLs
-- The 6-way labels are imbalanced, with the smallest classes representing roughly 2–4% of a split
-- The comments file contains 10.67 million parsed records; 353,300 current submissions have linked comments
-- Duplicate titles occur across splits and will be monitored as a possible leakage concern
+```text
+NNDL Project/
+├── README.md
+├── requirements.txt
+├── .gitignore
+│
+├── data/
+│   ├── raw/fakeddit/          # Locally stored source dataset; not committed
+│   ├── processed/             # Generated cleaned datasets; not committed
+│   └── splits/                # Optional generated split files; not committed
+│
+├── notebooks/
+│   ├── 01_dataset_exploration.ipynb
+│   └── 02_data_preprocessing.ipynb
+│
+├── src/
+│   ├── data/
+│   │   ├── load_dataset.py
+│   │   ├── preprocess_text.py
+│   │   ├── preprocess_images.py
+│   │   └── preprocess_dataset.py
+│   ├── models/                # Future model implementations
+│   ├── training/               # Future training scripts
+│   ├── evaluation/            # Future metrics and comparisons
+│   └── utils/                  # Shared utilities
+│
+├── app/ui/                    # Future demonstration interface
+├── docs/                      # Project documentation and presentation material
+├── experiments/               # Local experiment outputs; not committed by default
+├── models/                    # Local checkpoints and final model files
+└── results/                   # Local metrics, plots, and reports
+```
 
-## Environment setup
+## Current implementation
 
-Create and activate a virtual environment, then install the current-phase dependencies:
+The current data pipeline:
+
+- reads the official train, validation, and test TSV files
+- normalizes missing values and text fields
+- preserves the available two-way, three-way, and six-way labels
+- standardizes timestamps and numeric metadata
+- validates image URLs without downloading images
+- adds text-length and image-availability features
+- streams the large comments file instead of loading it entirely into memory
+- generates a compact comment summary keyed by submission ID
+- writes processed CSV files for later analysis and modeling
+
+The notebooks provide code-based views of the dataset structure, label distributions, missing values, image references, comment coverage, and preprocessing outputs.
+
+## Setup
+
+Python 3.12 or newer is recommended for the pinned dependencies.
+
+Create and activate a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+On Windows PowerShell:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\\.venv\\Scripts\\Activate.ps1
+```
+
+Install the dependencies:
+
+```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Launch the notebook environment with:
+## Running preprocessing
 
-```powershell
-jupyter lab
-```
+After placing the raw Fakeddit files in `data/raw/fakeddit/`, run the main orchestration script from the project root:
 
-To regenerate the processed tables from the raw TSV files:
-
-```powershell
+```bash
 python src/data/preprocess_dataset.py
 ```
 
-This command streams the large comments file and writes only an aggregated comment summary. It does not modify the raw files.
+This script coordinates text and image-reference preprocessing and creates outputs in `data/processed/`. The individual modules `preprocess_text.py` and `preprocess_images.py` are reusable components; they do not normally need to be run separately.
 
-## Current working areas
+## Exploring the data
 
-```text
-notebooks/
-├── 01_dataset_exploration.ipynb
-└── 02_data_preprocessing.ipynb
+Start JupyterLab from the project root:
 
-src/data/
-├── load_dataset.py
-├── preprocess_text.py
-├── preprocess_images.py
-└── preprocess_dataset.py
-
-data/processed/       # Cleaned split tables and comment summary
-data/splits/          # Reserved for explicit split-ID exports
-results/plots/        # Exploration visualizations
-results/metrics/      # Data-quality and distribution summaries
+```bash
+jupyter lab
 ```
 
-## Data-handling principles
+Then open:
 
-- Keep the original files in `data/raw/fakeddit/` unchanged.
-- Use `id` in the submission tables and `submission_id` in the comments file to connect related records.
-- Preserve punctuation and wording in `clean_title`; only Unicode and repeated whitespace are normalized.
-- Keep missing metadata as missing values rather than replacing it with zero.
-- Represent image availability explicitly instead of silently dropping records with missing URLs.
-- Preserve the official train, validation, and test boundaries.
-- Keep all 2-way, 3-way, and 6-way labels until the project chooses its final target.
-- Avoid downloading or duplicating the full dataset until the required fields and sample scope are confirmed.
-- Save preprocessing decisions and assumptions so that the later modeling stage is reproducible.
-- Do not begin model training during the current phase.
+1. `notebooks/01_dataset_exploration.ipynb` for dataset statistics and quality checks.
+2. `notebooks/02_data_preprocessing.ipynb` for preprocessing behavior and output inspection.
+
+The notebooks expect the raw dataset and, where applicable, the generated processed files to exist in the paths described above.
+
+## Evaluation plan
+
+Future model experiments will use the official dataset splits where possible. Evaluation will include:
+
+- accuracy
+- precision, recall, and F1-score
+- macro and weighted averages for imbalanced labels
+- confusion matrices
+- per-class performance
+- comparison of text-only, image-only, and multimodal systems
+
+Potential duplicate or near-duplicate content across splits will also be examined so that reported results are interpreted carefully.
+
+## Reproducibility and version control
+
+Source code, notebooks, documentation, and configuration files belong in Git. Raw datasets, generated CSV/TSV files, downloaded images, model checkpoints, plots, and experiment outputs are excluded through `.gitignore` because they can be very large or reproducible from the source files.
+
+When new experiments are added, record their configuration, dataset split, label formulation, random seed, and evaluation results so that comparisons remain reproducible.
+
+## Project status
+
+Current stage: **data exploration and data preprocessing**.
+
+The model implementations, training scripts, formal evaluation reports, and demonstration application are planned next and should not be considered complete yet.
