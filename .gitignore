@@ -1,0 +1,71 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+.coverage
+htmlcov/
+
+# Raw and generated dataset artifacts
+Datasets/
+data/raw/
+data/processed/
+data/splits/
+*.tsv
+*.csv
+*.parquet
+
+# Generated experiment and result artifacts
+experiments/*
+results/plots/*
+results/metrics/*
+results/confusion_matrices/*
+
+# Python build and packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# Model artifacts
+models/checkpoints/*
+models/final/*
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.keras
+
+# Archives and downloaded packages
+*.zip
+*.tar
+*.tar.gz
+*.7z
