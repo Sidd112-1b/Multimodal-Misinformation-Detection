@@ -96,7 +96,8 @@ NNDL Project/
 │   │   ├── preprocess_text.py
 │   │   ├── preprocess_images.py
 │   │   └── preprocess_dataset.py
-│   ├── models/                # Future model implementations
+│   ├── models/
+│   │   └── text_baseline.py   # TF-IDF + logistic regression baseline
 │   ├── training/               # Future training scripts
 │   ├── evaluation/            # Future metrics and comparisons
 │   └── utils/                  # Shared utilities
@@ -157,6 +158,14 @@ python src/data/preprocess_dataset.py
 
 This script coordinates text and image-reference preprocessing and creates outputs in `data/processed/`. The individual modules `preprocess_text.py` and `preprocess_images.py` are reusable components; they do not normally need to be run separately.
 
+Validate the generated files after preprocessing:
+
+```bash
+python src/data/validate_processed_data.py
+```
+
+The validation step checks that the processed files exist, contain the expected columns, have unique non-overlapping submission IDs, preserve labels, use valid image flags, and contain comment summaries that link back to the official splits.
+
 ## Exploring the data
 
 Start JupyterLab from the project root:
@@ -172,6 +181,38 @@ Then open:
 
 The notebooks expect the raw dataset and, where applicable, the generated processed files to exist in the paths described above.
 
+## Text-only baseline
+
+The first modeling baseline uses normalized post titles with a TF-IDF unigram/bigram representation and logistic regression. It trains on the official training split and reports validation and test performance for the 2-way, 3-way, and 6-way label formulations.
+
+The default baseline is unweighted and includes a majority-class reference in the saved metrics. An optional balanced-class comparison can be run with `--class-weight balanced`.
+
+Run a quick smoke test on a limited training sample:
+
+```bash
+python src/models/text_baseline.py --sample-size 5000 --max-features 20000
+```
+
+Run the baseline using the full training split:
+
+```bash
+python src/models/text_baseline.py
+```
+
+The command above trains all three label formulations. To run only one formulation, specify it explicitly:
+
+```bash
+python src/models/text_baseline.py --label-column 3_way_label
+```
+
+For example, to test class weighting on the 6-way formulation:
+
+```bash
+python src/models/text_baseline.py --label-column 6_way_label --class-weight balanced
+```
+
+Metrics are written to `results/metrics/` and the serialized pipeline is written to `models/final/`. These generated artifacts are intentionally excluded from Git.
+
 ## Evaluation plan
 
 Future model experiments will use the official dataset splits where possible. Evaluation will include:
@@ -185,14 +226,4 @@ Future model experiments will use the official dataset splits where possible. Ev
 
 Potential duplicate or near-duplicate content across splits will also be examined so that reported results are interpreted carefully.
 
-## Reproducibility and version control
 
-Source code, notebooks, documentation, and configuration files belong in Git. Raw datasets, generated CSV/TSV files, downloaded images, model checkpoints, plots, and experiment outputs are excluded through `.gitignore` because they can be very large or reproducible from the source files.
-
-When new experiments are added, record their configuration, dataset split, label formulation, random seed, and evaluation results so that comparisons remain reproducible.
-
-## Project status
-
-Current stage: **data exploration and data preprocessing**.
-
-The model implementations, training scripts, formal evaluation reports, and demonstration application are planned next and should not be considered complete yet.
