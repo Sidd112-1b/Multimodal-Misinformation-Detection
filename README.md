@@ -2,7 +2,7 @@
 
 A multimodal deep-learning project for detecting misinformation in online posts by combining written content, associated images, and post metadata.
 
-The project uses the Fakeddit dataset and is being developed in stages. The current implementation focuses on dataset exploration and reproducible preprocessing. Later stages will compare text-only, image-only, and multimodal models.
+The project uses the Fakeddit dataset and is being developed in stages. The current implementation includes dataset exploration, reproducible preprocessing, a TF-IDF text baseline, and a PyTorch image baseline. Later stages will compare these baselines with DistilBERT, EfficientNet-B0, and a multimodal fusion model.
 
 ## Project objective
 
@@ -45,7 +45,7 @@ The submission data includes fields such as:
 
 The comments file contains comment text, authorship information, parent relationships, submission IDs, and comment scores.
 
-The raw dataset is not stored in this repository. It must be obtained separately and placed in the expected directory. The preprocessing pipeline currently validates image references and records image availability; it does not download every image automatically.
+The raw dataset and downloaded image files are not stored in this repository. They must be obtained separately. The image downloader supports resumable downloads and stores images as `<submission_id>.jpg`; the current image collection is stored on an external drive.
 
 ## Planned modeling workflow
 
@@ -57,7 +57,7 @@ Text features will be extracted from the post title and related text. Planned ex
 
 ### Image-only
 
-Available images will be transformed into model inputs. Planned experiments may include a conventional image baseline followed by a vision transformer such as ViT.
+Available images will be transformed into model inputs. The image baseline uses an ImageNet-pretrained ResNet-18 with a new classifier head. The planned final image encoder is a different CNN, EfficientNet-B0, so the final image model can be compared fairly against the baseline.
 
 ### Multimodal
 
@@ -88,16 +88,21 @@ NNDL Project/
 │
 ├── notebooks/
 │   ├── 01_dataset_exploration.ipynb
-│   └── 02_data_preprocessing.ipynb
+│   ├── 02_data_preprocessing.ipynb
+│   └── source/               # Notebook mirrors of the Python source files
+│       ├── data/
+│       └── models/
 │
 ├── src/
 │   ├── data/
 │   │   ├── load_dataset.py
 │   │   ├── preprocess_text.py
 │   │   ├── preprocess_images.py
-│   │   └── preprocess_dataset.py
+│   │   ├── preprocess_dataset.py
+│   │   └── image_dataset.py    # PyTorch Dataset and DataLoader helpers
 │   ├── models/
-│   │   └── text_baseline.py   # TF-IDF + logistic regression baseline
+│   │   ├── text_baseline.py   # TF-IDF + logistic regression baseline
+│   │   └── image_baseline.py  # PyTorch ResNet-18 image-only baseline
 │   ├── training/               # Future training scripts
 │   ├── evaluation/            # Future metrics and comparisons
 │   └── utils/                  # Shared utilities
@@ -111,19 +116,32 @@ NNDL Project/
 
 ## Current implementation
 
-The current data pipeline:
+The current implementation:
 
 - reads the official train, validation, and test TSV files
 - normalizes missing values and text fields
 - preserves the available two-way, three-way, and six-way labels
 - standardizes timestamps and numeric metadata
-- validates image URLs without downloading images
+- validates image URLs and supports resumable image downloading
 - adds text-length and image-availability features
 - streams the large comments file instead of loading it entirely into memory
 - generates a compact comment summary keyed by submission ID
 - writes processed CSV files for later analysis and modeling
+- trains reproducible TF-IDF and PyTorch ResNet-18 baselines
 
-The notebooks provide code-based views of the dataset structure, label distributions, missing values, image references, comment coverage, and preprocessing outputs.
+The notebooks provide code-based views of the dataset structure, label distributions, missing values, image references, comment coverage, and preprocessing outputs. Notebook mirrors of every file under `src/` are available under `notebooks/source/`; their CLI entry-point blocks are disabled so running all cells does not start downloads or model training automatically. The original `.py` files remain available for command-line execution.
+
+To run the PyTorch image baseline on the external-drive image collection, use a small stratified smoke test first:
+
+```powershell
+& ".\.venv\Scripts\python.exe" ".\src\models\image_baseline.py" `
+  --image-dir "E:\NNDL_Project_Data\Fakeddit\images" `
+  --label-column 2_way_label `
+  --sample-size 1000 `
+  --epochs 1
+```
+
+Remove `--sample-size 1000` for a full training run. Use `--class-weight balanced` when running the class-balanced comparison. The image baseline uses an ImageNet-pretrained ResNet-18, native PyTorch training, and a PyTorch `DataLoader`. Use `--device cuda` on a CUDA-enabled machine or leave the default `--device auto` to select CUDA automatically when available.
 
 ## Setup
 
@@ -225,5 +243,3 @@ Future model experiments will use the official dataset splits where possible. Ev
 - comparison of text-only, image-only, and multimodal systems
 
 Potential duplicate or near-duplicate content across splits will also be examined so that reported results are interpreted carefully.
-
-
