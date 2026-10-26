@@ -7,6 +7,8 @@ Pillow==12.3.0
 tqdm==4.70.1
 
 # PyTorch image baseline and later neural-network models.
+# Enables pip to find CUDA-enabled PyTorch wheels for NVIDIA GPU systems.
+--extra-index-url https://download.pytorch.org/whl/cu128
 torch>=2.5.0
 torchvision>=0.20.0
 

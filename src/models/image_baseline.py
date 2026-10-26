@@ -34,13 +34,18 @@ DEFAULT_MODEL_DIR = PROJECT_ROOT / "models" / "final"
 LABEL_COLUMNS = ("2_way_label", "3_way_label", "6_way_label")
 
 
+print(torch.cuda.is_available())
+if torch.cuda.is_available():
+    print(torch.cuda.get_device_name(0))
+
+
 def set_seed(seed: int) -> None:
     """Set reproducible random seeds for Python, NumPy, and PyTorch."""
 
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    if torch.cuda.is_available():
+    if nvidia_cuda_available():
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
@@ -203,12 +208,14 @@ def train_and_evaluate(
 
     set_seed(random_state)
     if device_name == "auto":
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda" if nvidia_cuda_available() else "cpu")
     else:
-        if device_name == "cuda" and not torch.cuda.is_available():
+        if device_name == "cuda" and not nvidia_cuda_available():
             raise RuntimeError(
-                "CUDA was requested with --device cuda, but no CUDA device is available. "
-                "Use --device cpu or install a CUDA-enabled PyTorch build."
+                "CUDA was requested with --device cuda, but this PyTorch build "
+                "cannot access an NVIDIA CUDA device. Install a CUDA-enabled "
+                "PyTorch build and check that the NVIDIA driver is available, "
+                "or use --device cpu."
             )
         device = torch.device(device_name)
     transform = build_transform()
@@ -301,6 +308,8 @@ def train_and_evaluate(
         "label_column": label_column,
         "image_dir": str(image_dir),
         "device": str(device),
+        "cuda_version": torch.version.cuda if device.type == "cuda" else None,
+        "gpu_name": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
         "random_state": random_state,
         "batch_size": batch_size,
         "epochs": epochs,
