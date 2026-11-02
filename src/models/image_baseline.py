@@ -182,6 +182,12 @@ def classification_metrics(
             output_dict=True,
             zero_division=0,
         ),
+        "classification_report_text": classification_report(
+            labels,
+            predictions,
+            labels=label_values,
+            zero_division=0,
+        ),
         "confusion_matrix": confusion_matrix(
             labels, predictions, labels=label_values
         ).tolist(),
@@ -369,7 +375,7 @@ def parse_args() -> argparse.Namespace:
         help="Label formulation to train, or 'all' to train all three.",
     )
     parser.add_argument("--batch-size", type=int, default=32)
-    parser.add_argument("--epochs", type=int, default=1)
+    parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument(
@@ -435,5 +441,6 @@ if __name__ == "__main__":
         print(f"  Device:              {output['device']}")
         print(f"  Validation accuracy: {validation['accuracy']:.4f}")
         print(f"  Test accuracy:       {test['accuracy']:.4f}")
+        print(f"  Test classification report:\n{test['classification_report_text']}")
         print(f"  Metrics: {output['result_path']}")
         print(f"  Model:   {output['model_path']}")

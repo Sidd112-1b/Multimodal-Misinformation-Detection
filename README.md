@@ -141,7 +141,7 @@ To run the PyTorch image baseline on the external-drive image collection, use a 
   --epochs 1
 ```
 
-Remove `--sample-size 1000` for a full training run. Use `--class-weight balanced` when running the class-balanced comparison. The image baseline uses an ImageNet-pretrained ResNet-18, native PyTorch training, and a PyTorch `DataLoader`. It automatically selects CUDA when the installed PyTorch build can access an NVIDIA GPU; use `--device cuda` to request it explicitly or `--device cpu` to force CPU execution.
+For a full training run, remove `--sample-size 1000` and `--epochs 1`; the default is 5 epochs. Use `--class-weight balanced` when running the class-balanced comparison. The image baseline uses an ImageNet-pretrained ResNet-18, native PyTorch training, and a PyTorch `DataLoader`. It automatically selects CUDA when the installed PyTorch build can access an NVIDIA GPU; use `--device cuda` to request it explicitly or `--device cpu` to force CPU execution.
 
 The PyTorch CUDA wheel index is included in `requirements.txt` for compatible NVIDIA systems. Install project dependencies with `pip install -r requirements.txt`. If your environment already has a CPU-only PyTorch build, replace it with the CUDA build using the official CUDA 12.8 wheel index:
 

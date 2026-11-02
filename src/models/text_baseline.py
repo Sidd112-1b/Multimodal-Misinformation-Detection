@@ -108,7 +108,14 @@ def evaluate(
         "classification_report": classification_report(
             labels,
             predictions,
+            labels=label_values,
             output_dict=True,
+            zero_division=0,
+        ),
+        "classification_report_text": classification_report(
+            labels,
+            predictions,
+            labels=label_values,
             zero_division=0,
         ),
         "confusion_matrix": confusion_matrix(labels, predictions, labels=label_values).tolist(),
@@ -220,6 +227,7 @@ if __name__ == "__main__":
         print(f"[{label_column}] Text baseline trained on {output['train_sample_size']:,} rows.")
         print(f"  Validation accuracy: {validation['accuracy']:.4f}")
         print(f"  Test accuracy:       {test['accuracy']:.4f}")
+        print(f"  Test classification report:\n{test['classification_report_text']}")
         print(
             f"  Majority baseline:   "
             f"{output['majority_baseline']['test_accuracy']:.4f} test accuracy"
